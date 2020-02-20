@@ -1,0 +1,184 @@
+<!DOCTYPE HTML>
+<html lang="pt-br">
+	<head>
+		<meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="perfil.css">
+        <title>invocador</title>
+    </head>
+    <body>
+        <div id="body"></div>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="template.js"></script>
+        <script>
+            new Vue({
+                el: '#body',
+                template: template1,
+                data(){
+                    return{
+                        pesq: false,
+                        searchn:'Brave Royal',
+                        profile:
+                            {
+                                nickname: '',
+                                icone: 'http://ddragon.leagueoflegends.com/cdn/10.3.1/img/profileicon/29.png'
+                            },
+                        elo:{
+                            nome:'',
+                            img:'img/UNRANKED.png',
+                            rank:''
+                        },
+                        elotft:{
+                            nome:'',
+                            img:'img/UNRANKED.png',
+                            rank:''
+                        },
+                        partidas:
+                            [
+                            ],
+                            api:{
+                                key: 'RGAPI-e77e3289-c889-4aca-a395-60c54bb770db',
+                                url: 'https://br1.api.riotgames.com/lol/summoner/v4/summoners/by-name/'
+                            },
+                            partidasid:{},
+                        champs:[
+
+                            ],
+                        champsnovo:[],
+                        queues:[],
+                        matches:[],
+						cores:[
+							{
+							backgroundColor: 'red'
+							}
+						]
+                            
+                    }
+                },
+                methods:{
+                    cor(a){
+                        console.log(a);
+                        axios.get(`https://br1.api.riotgames.com/lol/match/v4/matches/${a}?api_key=${this.api.key}`)
+                        .then(response5 => {
+                            this.partidasid = response5.data;
+                            b = this.partidasid.participantIdentities.filter(num => num.player.summonerName == this.profile.nickname);
+                            c = this.partidasid.participants.filter(num => num.participantId == b[0].participantId);
+                            console.log(c,b,this.partidasid);
+							console.log(c[0].stats.win);
+                            if(c[0].stats.win == true){
+								console.log('win');
+                               matches = (c[0],b[0],this.partidasid);
+								console.log(matches)
+                                this.cores.push( {backgroundColor: '#7072fd'});
+                                console.log(this.cores);
+							   
+                            }else{
+								console.log('lose');
+                                matches = (c[0],b[0],this.partidasid);
+								console.log(matches)
+                                this.cores.push( {backgroundColor: '#fd7272'});
+                                console.log(this.cores);
+                                
+                            }
+                            
+                            
+                        })
+                    },
+                    queu(a,b){
+                        if(b == 'q'){
+                        a = this.queues.filter(num => num.queueId == a);
+                        return a[0].description;
+                        }
+                        else if(b == 'm'){
+                            a = this.queues.filter(num => num.queueId == a);
+                            return a[0].map;
+                        }
+                    },
+                    cha(a,b){
+                        if(b == 'nome'){
+                            c = this.champs.filter(num => num[1].key == a);
+                            return c[0][0];
+                        }
+                        else if(b == 'img'){
+                            c = this.champs.filter(num => num[1].key == a);
+                            return `http://ddragon.leagueoflegends.com/cdn/10.3.1/img/champion/${c[0][1].image.full}`;
+                            
+                        }
+                    },
+                    search(){
+                        this.pesq = false;
+                        this.matches = [];
+						this.cores = [];
+                        if(this.searchn !== ''){
+                        axios.get(`${this.api.url}${this.searchn}?api_key=${this.api.key}`)
+                        .then(response => {
+                        this.profile = {
+                            icone: `http://ddragon.leagueoflegends.com/cdn/10.3.1/img/profileicon/${response.data.profileIconId}.png`,
+                            nickname: response.data.name,
+                            id: response.data.id,
+                            idA: response.data.accountId
+                        }
+                        axios.get(`https://br1.api.riotgames.com/tft/league/v1/entries/by-summoner/${this.profile.id}?api_key=${this.api.key}`)
+                        .then(response2 => {
+                            if(response2.data[0]){
+                                this.elotft = {
+                                        nome: response2.data[0].tier,
+                                        img : `img/${response2.data[0].tier}.png`,
+                                        rank: response2.data[0].rank
+                                    }
+                            }else{
+                                this.elotft = {
+                                        nome: 'joga ranked chupingole',
+                                        img : 'img/UNRANKED.png',
+                                        rank: ''
+                                    }
+                            }
+                        })
+                        axios.get(`https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/${this.profile.id}?api_key=${this.api.key}`)
+                        .then(response2 => {
+                            if(response2.data[0]){
+                                this.elo = {
+                                        nome: response2.data[0].tier,
+                                        img : `img/${response2.data[0].tier}.png`,
+                                        rank: response2.data[0].rank
+                                    }
+                            }else{
+                                this.elo = {
+                                        nome: 'joga ranked chupingole',
+                                        img : 'img/UNRANKED.png',
+                                        rank: ''
+                                    }
+                            }
+                            this.pesq = true;
+                        })
+                        axios.get(`https://br1.api.riotgames.com/lol/match/v4/matchlists/by-account/${this.profile.idA}?endIndex=10&api_key=${this.api.key}`)
+                        .then(response3 => {
+                            this.partidas = response3.data.matches;
+                            this.pesq = true;
+                            this.partidas.forEach(p => {
+                                this.cor(p.gameId);
+                            });
+                        })
+                        })
+                        }
+                    }
+
+                    
+                },
+                mounted () {
+                    axios.get(`https://ddragon.leagueoflegends.com/cdn/10.3.1/data/en_US/champion.json`)
+                    .then(response4 => {
+                        this.champs = Object.entries(response4.data.data);
+                    })
+                    axios.get(`http://static.developer.riotgames.com/docs/lol/queues.json`)
+                    .then(response5 => {
+                        this.queues = response5.data;
+                    })
+                }
+            })
+        </script>
+    </body>
+</html>
